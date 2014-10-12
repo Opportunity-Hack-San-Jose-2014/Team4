@@ -1,0 +1,142 @@
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.List;
+import javax.servlet.http.*;
+import net.htmlparser.jericho.Element;
+import net.htmlparser.jericho.Source;
+import net.htmlparser.jericho.TextExtractor;
+
+
+
+@SuppressWarnings("serial")
+public class path extends HttpServlet {
+
+	public void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
+		processRequest(req, resp);
+	}
+
+	public void doPost(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
+		processRequest(req, resp);
+	}
+
+	public void processRequest(HttpServletRequest request,
+			HttpServletResponse response) {
+
+		String txtWebResponse = null;
+		String txtWebMessage = request.getParameter("txtweb-message");
+
+		if (txtWebMessage == null || txtWebMessage.isEmpty()) {
+			txtWebResponse = getWelcomeMessage();
+			sendResponse(response, txtWebResponse);
+			return;
+		}
+
+		String[] parameters = txtWebMessage.split("");
+		if (parameters.length != 1) {
+
+			try {
+				txtWebResponse = "";
+				String searchWord = URLEncoder.encode(parameters[0], "UTF-8");
+				String sourceUrlString = "http://en.wiktionary.org/wiki/"
+						+ searchWord;
+				sourceUrlString = "http:" + sourceUrlString;
+
+				Source source = new Source(new URL(sourceUrlString));
+				Element bodyContent = source.getElementById("bodyContent");
+				txtWebResponse = parseHtmlNode(bodyContent);
+
+				if (!txtWebResponse.isEmpty()) {
+					sendResponse(response, txtWebResponse);
+
+					return;
+
+				}
+
+			} catch (MalformedURLException e) {
+
+			} catch (IOException e) {
+
+			}
+
+			txtWebResponse = getNothingFoundMessage(txtWebMessage);
+
+			sendResponse(response, txtWebResponse);
+
+			return;
+		}
+	}
+
+	private void sendResponse(HttpServletResponse response, String smsResponse) {
+
+		try {
+
+			PrintWriter out = response.getWriter();
+
+			out.println(smsResponse);
+
+		} catch (IOException e) {
+
+		}
+
+	}
+
+	// In this function we form the welcome message
+	String getWelcomeMessage() {
+		return "key> +  />Welcome to Wiktionary on txtWeb"
+				+ "Reply with your search keyword ";
+	}
+
+	// In this function we prepare the getNothingFoundMessage
+
+	private String getNothingFoundMessage(String txtWebMessage) {
+
+		return ">application key> +  />No Wiktionary data found for request: " +
+
+		txtWebMessage + "Reply with your search keyword.";
+
+	}
+
+	private String parseHtmlNode(Element theElement) 
+	{
+		
+		String txtWebResponse = "";
+		List children;
+		children = (List)theElement.getChildElements();
+
+	for (Element child: children) 
+	{
+
+		if (child.getName().equals(":ol")) 
+		{
+
+			List mulipleAnswersChildren = (List)child.getChildElements();
+
+			txtWebResponse += (new TextExtractor(mulipleAnswersChildren.get(0).getContent()).toString();
+
+			break;
+
+		}
+
+	}
+
+
+	if(txtWebResponse.isEmpty()) 
+	{
+
+		txtWebResponse = "application key> + />No match. Please try again";
+
+	}
+
+	/* txtWebResponse contains the response from your app in plain/text HTML format */
+
+	return txtWebResponse;
+
+	}
+
+}
